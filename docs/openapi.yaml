@@ -1,0 +1,629 @@
+openapi: 3.0.3
+info:
+  title: Kuvera API
+  description: |
+    Unofficial OpenAPI specification for the Kuvera investment platform API.
+
+    Kuvera is a platform that enables investing in mutual funds, gold, and other assets in India.
+    This API provides endpoints for user authentication, portfolio management, and investment operations.
+
+    ## Authentication
+
+    All endpoints except `/api/v5/users/authenticate.json` require authentication using a JWT token
+    obtained from the login endpoint. Include the token in the `Authorization` header as `Bearer <token>`.
+
+    ## Error Handling
+
+    The API returns standard HTTP status codes. Error responses include details about
+    what went wrong.
+
+    ## Rate Limiting
+
+    Please be respectful with API usage. The platform may implement rate limiting.
+  version: 3.0.0
+  contact:
+    name: Kuvera API (Unofficial)
+    url: https://github.com/adjaecent/unofficial-kuvera-api
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.kuvera.in
+    description: Production Kuvera API server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/v5/users/authenticate.json:
+    post:
+      summary: User Authentication
+      description: |
+        Authenticate a user with email and password to receive an access token.
+
+        The access token must be included in the Authorization header for all
+        subsequent API calls.
+      tags:
+        - Authentication
+      security: [] # No authentication required for login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            example:
+              email: "user@example.com"
+              password: "your_password"
+              v: "1.239.2"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+              example:
+                status: "success"
+                name: "John Doe"
+                email: "user@example.com"
+                profile: null
+                new_user: false
+                token: "eyJhbGciOiJIUzI1NiJ9..."
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+              example:
+                status: "error"
+                error: "Invalid credentials"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v5/portfolio/returns.json:
+    get:
+      summary: Get Portfolio Summary
+      description: |
+        Retrieve a comprehensive summary of the user's portfolio including
+        current values, gains/losses, and breakdown by asset class.
+
+        Requires authentication.
+      tags:
+        - Portfolio
+      responses:
+        "200":
+          description: Portfolio summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioResponse"
+              example:
+                status: "success"
+                data:
+                  current_value: 2352256.84
+                  current_gain: 693230.50
+                  current_gain_percent: 43.56
+                  one_day_gain: 649.35
+                  one_day_gain_percent: 0.03
+                  invested: 1638503.08
+                  current_xirr: 12.81
+                  mutual_funds:
+                    current_value: 2157861.00
+                    total_invested: 1469068.20
+                    xirr_percentage: 12.92
+                    absolute_percentage: 46.89
+                  gold:
+                    current_value: 80851.89
+                    total_gold_quantity: 6.64
+                  indian_equities:
+                    current_value: 81872.90
+                    total_invested: 69435.31
+        "401":
+          description: Unauthorized - invalid or missing access token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v3/portfolio/holdings.json:
+    get:
+      summary: Get Detailed Holdings
+      description: |
+        Retrieve detailed information about all fund holdings including
+        transaction history, SIP details, and performance metrics.
+
+        Returns a map where keys are fund codes and values are arrays of holdings.
+
+        Requires authentication.
+      tags:
+        - Portfolio
+      responses:
+        "200":
+          description: Holdings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HoldingsResponse"
+              example:
+                "SBD81G-GR":
+                  - folioNumber: "22834304"
+                    allottedAmount: 461394.387
+                    lock_free_units: 2284.422
+                    units: 2284.422
+                    isSip: false
+                    kuvera_category: "Equity"
+                    direct: true
+                    order_details:
+                      - amount: 271403.89
+                        nav: 153.5717
+                        units: 1767.278
+                        order_date: "2020-09-29"
+                    valid_flag: "Y"
+                    source: "both"
+        "401":
+          description: Unauthorized - invalid or missing access token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v3/gold/current_price.json:
+    get:
+      summary: Get Current Gold Prices
+      description: |
+        Retrieve current gold buy/sell prices from Kuvera's partner along with
+        applicable tax information.
+
+        Requires authentication.
+      tags:
+        - Market Data
+      parameters:
+        - name: v
+          in: query
+          required: true
+          schema:
+            type: string
+            example: "1.239.2"
+          description: API version parameter
+        - name: cached
+          in: query
+          required: false
+          schema:
+            type: boolean
+            example: true
+          description: Whether to use cached data
+      responses:
+        "200":
+          description: Gold prices retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoldPriceResponse"
+              example:
+                taxes:
+                  cgst: 1.5
+                  sgst: 1.5
+                  igst: 3.0
+                block_id: "XpmM3VRq"
+                fetched_at: "2025-10-08T14:46:17.862+05:30"
+                current_gold_price:
+                  buy: 12566.0
+                  sell: 12177.29
+        "401":
+          description: Unauthorized - invalid or missing access token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from the login endpoint
+
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+        - v
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's Kuvera email address
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          description: User's Kuvera password
+          example: "your_password"
+        v:
+          type: string
+          description: API version parameter
+          example: "1.239.2"
+
+    LoginResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Login status ("success" or "error")
+          example: "success"
+        name:
+          type: string
+          description: User's full name
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@example.com"
+        profile:
+          description: Additional profile information
+          nullable: true
+          example: null
+        new_user:
+          type: boolean
+          description: Whether this is a new user
+          example: false
+        token:
+          type: string
+          description: JWT access token for authenticated requests
+          example: "eyJhbGciOiJIUzI1NiJ9..."
+        error:
+          type: string
+          description: Error message if login failed
+          example: "Invalid credentials"
+
+    GoldTaxes:
+      type: object
+      properties:
+        cgst:
+          type: number
+          format: double
+          description: Central Goods and Services Tax percentage
+          example: 1.5
+        sgst:
+          type: number
+          format: double
+          description: State Goods and Services Tax percentage
+          example: 1.5
+        igst:
+          type: number
+          format: double
+          description: Integrated Goods and Services Tax percentage
+          example: 3.0
+
+    CurrentGoldPrice:
+      type: object
+      properties:
+        buy:
+          type: number
+          format: double
+          description: Current buy price per gram in INR
+          example: 12566.0
+        sell:
+          type: number
+          format: double
+          description: Current sell price per gram in INR
+          example: 12177.29
+
+    GoldPriceResponse:
+      type: object
+      properties:
+        taxes:
+          $ref: "#/components/schemas/GoldTaxes"
+          description: Tax information for gold trading
+        block_id:
+          type: string
+          description: Unique identifier for this price block
+          example: "XpmM3VRq"
+        fetched_at:
+          type: string
+          format: date-time
+          description: When the price was fetched
+          example: "2025-10-08T14:46:17.862+05:30"
+        current_gold_price:
+          $ref: "#/components/schemas/CurrentGoldPrice"
+          description: Current buy/sell prices
+
+    MutualFundsData:
+      type: object
+      properties:
+        current_value:
+          type: number
+          format: double
+          description: Current value of mutual fund investments
+          example: 2157861.00
+        total_invested:
+          type: number
+          format: double
+          description: Total amount invested in mutual funds
+          example: 1469068.20
+        xirr_percentage:
+          type: number
+          format: double
+          description: XIRR percentage return
+          example: 12.92
+        absolute_percentage:
+          type: number
+          format: double
+          description: Absolute return percentage
+          example: 46.89
+        one_day_change:
+          type: number
+          format: double
+          description: One-day change in value
+          example: 1218.67
+
+    GoldData:
+      type: object
+      properties:
+        current_value:
+          type: number
+          format: double
+          description: Current value of gold holdings
+          example: 80851.89
+        total_gold_quantity:
+          type: number
+          format: double
+          description: Total quantity of gold in grams
+          example: 6.64
+        one_day_change:
+          type: number
+          format: double
+          description: One-day change in value
+          example: 1018.58
+
+    IndianEquitiesData:
+      type: object
+      properties:
+        current_value:
+          type: number
+          format: double
+          description: Current value of Indian equity holdings
+          example: 81872.90
+        total_invested:
+          type: number
+          format: double
+          description: Total amount invested in Indian equities
+          example: 69435.31
+        one_day_change:
+          type: number
+          format: double
+          description: One-day change in value
+          example: -694.19
+        one_day_change_percentage:
+          type: number
+          format: double
+          description: One-day change percentage
+          example: -0.85
+
+    PortfolioData:
+      type: object
+      properties:
+        current_value:
+          type: number
+          format: double
+          description: Total current value of the portfolio
+          example: 2352256.84
+        current_gain:
+          type: number
+          format: double
+          description: Current gain/loss amount
+          example: 693230.50
+        current_gain_percent:
+          type: number
+          format: double
+          description: Current gain percentage
+          example: 43.56
+        one_day_gain:
+          type: number
+          format: double
+          description: One-day gain/loss amount
+          example: 649.35
+        one_day_gain_percent:
+          type: number
+          format: double
+          description: One-day gain percentage
+          example: 0.03
+        invested:
+          type: number
+          format: double
+          description: Total amount invested
+          example: 1638503.08
+        current_xirr:
+          type: number
+          format: double
+          description: Current XIRR percentage
+          example: 12.81
+        mutual_funds:
+          $ref: "#/components/schemas/MutualFundsData"
+          description: Mutual funds data
+        gold:
+          $ref: "#/components/schemas/GoldData"
+          description: Gold investment data
+        indian_equities:
+          $ref: "#/components/schemas/IndianEquitiesData"
+          description: Indian equities data
+
+    PortfolioResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Response status
+          example: "success"
+        data:
+          $ref: "#/components/schemas/PortfolioData"
+          description: Portfolio data
+
+    OrderDetail:
+      type: object
+      properties:
+        amount:
+          type: number
+          format: double
+          description: Transaction amount
+          example: 25000.0
+        reinvest_amount:
+          description: Reinvestment amount (usually null)
+          nullable: true
+          example: null
+        nav:
+          type: number
+          format: double
+          description: Net Asset Value at time of purchase
+          example: 153.57
+        units:
+          type: number
+          format: double
+          description: Number of units purchased
+          example: 162.78
+        order_date:
+          type: string
+          format: date
+          description: Date of the order
+          example: "2020-09-29"
+
+    Holding:
+      type: object
+      properties:
+        folioNumber:
+          type: string
+          description: Folio number for this holding
+          example: "22834304"
+        allottedAmount:
+          type: number
+          format: double
+          description: Total amount allotted/invested
+          example: 461394.387
+        lock_free_units:
+          type: number
+          format: double
+          description: Number of lock-free units
+          example: 2284.422
+        units:
+          type: number
+          format: double
+          description: Total number of units owned
+          example: 2284.422
+        xirr_dates:
+          type: array
+          items:
+            type: string
+            format: date
+          description: Dates for XIRR calculation
+          example: ["2020-09-29", "2025-03-25"]
+        xirr_values:
+          type: array
+          items:
+            type: number
+            format: double
+          description: Values for XIRR calculation
+          example: [-271403.89, -189990.48]
+        isSip:
+          type: boolean
+          description: Whether this is a SIP investment
+          example: false
+        kuvera_category:
+          type: string
+          description: Kuvera fund categorization
+          example: "Equity"
+        direct:
+          type: boolean
+          description: Whether this is a direct fund
+          example: true
+        order_details:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderDetail"
+          description: All order/transaction details
+        reason:
+          description: Any reason (usually empty)
+          nullable: true
+        valid_flag:
+          type: string
+          description: Whether the holding is valid
+          example: "Y"
+        source:
+          type: string
+          description: Source of the holding
+          example: "both"
+
+    HoldingsResponse:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          $ref: "#/components/schemas/Holding"
+      description: |
+        Map of fund codes to arrays of holdings.
+        Keys are fund codes (e.g., "SBD81G-GR") and values are arrays of holdings.
+      example:
+        "SBD81G-GR":
+          - folioNumber: "22834304"
+            allottedAmount: 461394.387
+            units: 2284.422
+            kuvera_category: "Equity"
+            direct: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Error status
+          example: "error"
+        message:
+          type: string
+          description: Error message
+          example: "Unauthorized"
+        error:
+          type: string
+          description: Error type or code
+          example: "invalid_token"
+
+tags:
+  - name: Authentication
+    description: User authentication and token management
+  - name: Portfolio
+    description: Portfolio and holdings management
+  - name: Market Data
+    description: Market data and pricing information
