@@ -7,7 +7,8 @@ An unofficial **read-only** Go client library for the [Kuvera](https://kuvera.in
 ## 📚 Documentation
 
 - **API Reference**: [pkg.go.dev](https://pkg.go.dev/github.com/adjaecent/unofficial-kuvera-api)
-- **Kuvera API Specification**: [API Documentation](https://adjaecent.github.io/unofficial-kuvera-api/api)
+- **Interactive API Documentation**: [OpenAPI Specification](https://adjaecent.github.io/unofficial-kuvera-api/api)
+- **OpenAPI YAML**: [Raw Specification](https://adjaecent.github.io/unofficial-kuvera-api/openapi.yaml)
 
 > **🔍 Read-Only Library**: For data retrieval and analysis only. Cannot place trades or modify accounts.
 
