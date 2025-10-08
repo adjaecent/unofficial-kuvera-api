@@ -2,12 +2,12 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/adjaecent/unofficial-kuvera-api.svg)](https://pkg.go.dev/github.com/adjaecent/unofficial-kuvera-api)
 
-An unofficial **read-only** Go client library for the [Kuvera](https://kuvera.in/) investment platform API.
+An unofficial **read-only** Go client library for the [Kuvera](https://kuvera.in) investment platform API.
 
 ## 📚 Documentation
 
 - **API Reference**: [pkg.go.dev](https://pkg.go.dev/github.com/adjaecent/unofficial-kuvera-api)
-- **Kuvera API Specification**: [captnemo.in/kuvera-unofficial-api-specification](https://captnemo.in/kuvera-unofficial-api-specification)
+- **Kuvera API Specification**: [API Documentation](https://adjaecent.github.io/unofficial-kuvera-api/api)
 
 > **🔍 Read-Only Library**: For data retrieval and analysis only. Cannot place trades or modify accounts.
 
@@ -78,7 +78,7 @@ func main() {
     if err != nil {
         log.Fatal("Failed to get holdings:", err)
     }
-    
+
     fmt.Printf("📊 Total fund codes: %d\n", len(*holdings))
     for fundCode, fundHoldings := range *holdings {
         for _, holding := range fundHoldings {
@@ -149,42 +149,3 @@ godoc -http=:6060
 # Run example
 go run example/main.go
 ```
-
-## 📋 API Endpoints
-
-| Method | Endpoint | Auth Required | Description |
-|--------|----------|---------------|-------------|
-| `Login` | `/api/v5/users/authenticate.json` | ❌ | Authenticate and get access token |
-| `GetPortfolio` | `/api/v5/portfolio/returns.json` | ✅ | Get complete portfolio data |
-| `GetHoldings` | `/api/v3/portfolio/holdings.json` | ✅ | Get detailed fund holdings and transactions |
-| `GetGoldPrice` | `/api/v3/gold/current_price.json` | ✅ | Get current gold buy/sell prices |
-
-## 🏗️ Project Structure
-
-```
-unofficial-kuvera-api/
-├── go.mod              # Go module definition
-├── kuvera.go          # Main client implementation
-├── example_test.go    # Documentation examples
-├── example/
-│   └── main.go        # Working example with real API calls
-└── README.md          # This file
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
-
-## 📜 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## ⚠️ Disclaimer
-
-This is an unofficial library and is not affiliated with or endorsed by Kuvera. The library is provided "as is" without warranty of any kind. Always verify data through the official Kuvera platform before making investment decisions.
-
-Use this library responsibly and in accordance with Kuvera's terms of service.
