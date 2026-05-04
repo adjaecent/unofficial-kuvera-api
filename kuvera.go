@@ -664,11 +664,12 @@ func (c *Client) Login(ctx context.Context, username, password string) (*LoginRe
 
 	// Handle response parsing
 	if err := c.handleResponse(resp, &loginResp, "login"); err != nil {
-		// Check for specific login error messages
-		if loginResp.Error != "" || loginResp.Status != "success" {
-			return &loginResp, ErrInvalidCredentials
-		}
 		return &loginResp, err
+	}
+
+	// Check for specific login error messages in the response
+	if loginResp.Error != "" || loginResp.Status != "success" {
+		return &loginResp, ErrInvalidCredentials
 	}
 
 	// Store access token in client for subsequent requests

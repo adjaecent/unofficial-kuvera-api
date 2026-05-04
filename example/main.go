@@ -16,16 +16,13 @@ func main() {
 	client := kuvera.NewClient()
 	ctx := context.Background()
 
-	// Get credentials from environment variables (recommended)
+	// Get credentials from environment variables
 	username := os.Getenv("KUVERA_USERNAME")
 	password := os.Getenv("KUVERA_PASSWORD")
 
-	// Fallback to placeholder values for demo (update these with real credentials)
-	if username == "" {
-		username = "your_username"
-	}
-	if password == "" {
-		password = "your_password"
+	if username == "" || password == "" {
+		fmt.Println("❌ KUVERA_USERNAME and KUVERA_PASSWORD environment variables must be set")
+		return
 	}
 
 	fmt.Printf("📧 Using username: %s\n", username)
